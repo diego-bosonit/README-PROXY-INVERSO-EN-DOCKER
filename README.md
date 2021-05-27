@@ -2,7 +2,7 @@
 <p>1. Instalamos una máquina virtual de Ubuntu, podemos utilizar Hyper-V, Oracle VM VirtualBox...</p>
 <p>2. Una vez instalado Ubuntu pasamos a la instalación con los siguientes comandos:</p>
 <p>&nbsp; sudo apt update</p>
-<p>&nbsp; sudo apt install docker.io</p>
+<p>&nbsp; sudo apt install docker-ce</p>
 <p>3. Hecho esto pasamos a instalar Docker Compose:</p>
 <p>&nbsp; sudo apt install docker-compose</p>
 <p>4. Creamos un archivo donde al ejecutarlo cargamos la imagen y los volúmenes de las dos páginas webs, la extensión de este archivo debe de ser .yml</p>
