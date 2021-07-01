@@ -1,0 +1,115 @@
+version: "3.9"
+services:
+
+
+# Configuración de Gitlab
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+        nginx['redirect_http_to_https'] = false
+    ports:
+      - '80:80'
+      - '443:443'
+      - '2224:22'
+    volumes:
+      - /mnt/volumes/gitlab-config:/etc/gitlab
+      - /mnt/volumes/gitlab-logs:/var/log/gitlab
+      - /mnt/volumes/gitlab-data:/var/opt/gitlab
+    networks:
+      - net
+
+
+
+# Configuración de Jenkins
+  jenkins:
+    image: jenkins/jenkins:lts
+    user: root
+    ports:
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - /mnt/volumes/jenkins:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /usr/bin/docker:/usr/bin/docker
+    networks:
+      - net
+
+
+
+# Configuración de Docker Registry
+  registry:
+    image: registry:2.7.1
+    ports:
+    - 5000:5000
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+    volumes:
+      - /mnt/volumes/registry-auth:/auth
+      - /mnt/volumes/registry-data:/var/lib/registry
+    networks:
+      - net
+
+
+
+# Configuración de Swarmpit
+  app:
+    image: swarmpit/swarmpit:latest
+    environment:
+      - SWARMPIT_DB=http://db:5984
+      - SWARMPIT_INFLUXDB=http://influxdb:8086
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 888:8080
+    networks:
+      - net
+    depends_on:
+      - db
+      - influxdb
+
+
+
+# Configuración de Couchdb
+  db:
+    image: couchdb:2.3.0
+    volumes:
+      - /mnt/volumes/db-data:/opt/couchdb/data
+    networks:
+      - net
+
+
+
+# Configuración de Influx
+  influxdb:
+    image: influxdb:1.7
+    volumes:
+      - /mnt/volumes/influx-data:/var/lib/influxdb
+    networks:
+      - net
+
+
+
+# Configuración del Swarmpit agent
+  agent:
+    image: swarmpit/agent:latest
+    environment:
+      - DOCKER_API_VERSION=1.35
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - net
+    deploy:
+      mode: global
+    labels:
+        swarmpit.agent: 'true'
+
+
+# Configuración de red
+networks:
+  red1:
+    driver: overlay
+    external: false
